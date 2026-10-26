@@ -1,0 +1,15 @@
+# Build output
+/target
+
+# Never commit firmware, kernels, patches or third-party tools:
+# they are copyrighted by others. Users supply their own.
+*.bin
+*.img
+*.ips
+*.exe
+*.dll
+*.rar
+*.zip
+*.7z
+
+.DS_Store

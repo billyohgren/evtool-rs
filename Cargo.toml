@@ -1,0 +1,9 @@
+[package]
+name = "evtool-rs"
+version = "0.1.0"
+edition = "2024"
+description = "Unpack, IPS-patch and repack Evox M8/M8+ Xbox BIOS images"
+license = "MIT"
+
+[dev-dependencies]
+lzxd = "0.2.7"
