@@ -18,7 +18,7 @@ jobs:
           - { os: macos-latest, target: x86_64-apple-darwin, name: macos-x64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install toolchain
         shell: bash
         run: |
@@ -46,22 +46,24 @@ jobs:
             cp target/${{ matrix.target }}/release/evtool-rs "$dir"/
             tar czf "$dir.tar.gz" "$dir"
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.name }}
-          path: evtool-rs-*.*
+          path: |
+            evtool-rs-*.zip
+            evtool-rs-*.tar.gz
 
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           merge-multiple: true
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          sha256sum evtool-rs-* > SHA256SUMS
-          gh release create "$GITHUB_REF_NAME" evtool-rs-* SHA256SUMS \
+          sha256sum evtool-rs-*.zip evtool-rs-*.tar.gz > SHA256SUMS
+          gh release create "$GITHUB_REF_NAME" evtool-rs-*.zip evtool-rs-*.tar.gz SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
