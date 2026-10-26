@@ -4,18 +4,72 @@ A command-line tool for Evox M8/M8+ Xbox BIOS images: unpack the kernel, apply a
 
 This repository contains no BIOS, kernel or patch files. You need to supply your own.
 
-```sh
-cargo build --release
-B=target/release/evtool-rs
+## Download
 
-$B unpack M8plus.bin xboxkrnl.img                      # ROM -> kernel image
-$B ips    xboxkrnl.img m8plus_kpatcher.ips patched.img # apply an IPS patch
-$B pack   patched.img M8plus.bin M8plus_kpatched.bin   # kernel + base ROM -> ROM
+Prebuilt binaries are on the [Releases](https://github.com/billyohgren/evtool-rs/releases) page:
+
+| System | File |
+|---|---|
+| Windows | `evtool-rs-<version>-windows-x64.zip` |
+| macOS, Apple Silicon (M1 and later) | `evtool-rs-<version>-macos-arm64.tar.gz` |
+| macOS, Intel | `evtool-rs-<version>-macos-x64.tar.gz` |
+| Linux | `evtool-rs-<version>-linux-x64.tar.gz` |
+
+Unpack the archive and put your BIOS (`M8plus.bin`) and patch (`m8plus_kpatcher.ips`) in the same folder as `evtool-rs`. The binaries are not signed, so Windows and macOS warn the first time you run them.
+
+## Usage
+
+The example unpacks the kernel from `M8plus.bin`, applies `m8plus_kpatcher.ips`, and packs it into a new BIOS, `M8plus_kpatched.bin`.
+
+### Windows
+
+Open the folder in File Explorer, type `cmd` in the address bar and press Enter. Then run:
+
+```bat
+evtool-rs.exe unpack M8plus.bin xboxkrnl.img
+evtool-rs.exe ips    xboxkrnl.img m8plus_kpatcher.ips patched.img
+evtool-rs.exe pack   patched.img M8plus.bin M8plus_kpatched.bin
 ```
+
+If SmartScreen says "Windows protected your PC", click **More info** and then **Run anyway**.
+
+### macOS and Linux
+
+Open a terminal in the folder and run:
+
+```sh
+./evtool-rs unpack M8plus.bin xboxkrnl.img
+./evtool-rs ips    xboxkrnl.img m8plus_kpatcher.ips patched.img
+./evtool-rs pack   patched.img M8plus.bin M8plus_kpatched.bin
+```
+
+On macOS, if the system says the developer cannot be verified, clear the quarantine flag first:
+
+```sh
+xattr -d com.apple.quarantine evtool-rs
+```
+
+### What the commands do
+
+| Command | Does |
+|---|---|
+| `unpack <rom.bin> <xboxkrnl.img>` | Extracts the kernel from a BIOS |
+| `ips <in> <patch.ips> <out>` | Applies an IPS patch to a file |
+| `pack <xboxkrnl.img> <base-rom.bin> <out.bin>` | Packs a kernel into a copy of the base BIOS |
 
 Pack with the base ROM that matches the console: `M8plus.bin` for hardware 1.0–1.5, `M8plus_16.bin` for 1.6. The two differ only in the init table at the start. The kernel is the same in both.
 
 EVtool's patch options (IGR, LBA48, logo, boot flags) are not included.
+
+## Building from source
+
+With [Rust](https://rustup.rs) installed:
+
+```sh
+cargo build --release
+```
+
+The binary is `target/release/evtool-rs`.
 
 ## ROM layout
 

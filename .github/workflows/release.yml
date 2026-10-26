@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, name: windows-x64 }
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, name: linux-x64 }
+          - { os: macos-latest, target: aarch64-apple-darwin, name: macos-arm64 }
+          - { os: macos-latest, target: x86_64-apple-darwin, name: macos-x64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        shell: bash
+        run: |
+          rustup update stable
+          rustup default stable
+          rustup target add ${{ matrix.target }}
+          if [ "${{ matrix.target }}" = x86_64-unknown-linux-musl ]; then
+            sudo apt-get update && sudo apt-get install -y musl-tools
+          fi
+      - name: Test
+        if: matrix.name != 'macos-x64'
+        run: cargo test --release --target ${{ matrix.target }}
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Package
+        shell: bash
+        run: |
+          dir=evtool-rs-${GITHUB_REF_NAME}-${{ matrix.name }}
+          mkdir "$dir"
+          cp README.md LICENSE "$dir"/
+          if [ "${{ matrix.os }}" = windows-latest ]; then
+            cp target/${{ matrix.target }}/release/evtool-rs.exe "$dir"/
+            7z a "$dir.zip" "$dir" > /dev/null
+          else
+            cp target/${{ matrix.target }}/release/evtool-rs "$dir"/
+            tar czf "$dir.tar.gz" "$dir"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: evtool-rs-*.*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha256sum evtool-rs-* > SHA256SUMS
+          gh release create "$GITHUB_REF_NAME" evtool-rs-* SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
